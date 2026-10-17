@@ -117,6 +117,8 @@ a.logo:hover{transform:rotate(-12deg)}
 .w-row{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(18px,3vw,40px);align-items:end}
 @media (max-width:760px){.w-row{grid-template-columns:1fr}}
 .w-scan{padding:20px 24px;font-size:15px;letter-spacing:.1em}
+.scanst{margin:8px 2px 0;font-size:12px;font-weight:600;letter-spacing:.02em;text-transform:none;opacity:.7;min-height:1.2em}
+.scanst.bad{opacity:1;color:var(--red)}
 .w-hint{margin-top:8px;font-size:12px;font-style:italic;opacity:.75}
 .w-or{font-size:11px;letter-spacing:.08em;opacity:.7}
 .sugg{display:grid;margin-top:8px;border:1.5px solid var(--ink);border-radius:8px;overflow:hidden;background:var(--paper)}
@@ -354,6 +356,7 @@ footer .credit a{text-decoration:none}
           <div class="w-row">
             <div>
               <button type="button" class="btn btn-go w-scan" id="scan">Escanear el QR de la invitación</button>
+              <p class="scanst" id="scanst" aria-live="polite">Lector de QR v3</p>
               <input type="file" id="scanin" accept="image/*" capture="environment" hidden>
               <div class="camov" id="camov" hidden role="dialog" aria-label="Escanear el QR de la invitación">
                 <div class="camwrap"><video id="camv" playsinline muted autoplay></video><div class="camframe" aria-hidden="true"></div></div>
@@ -13387,6 +13390,7 @@ function kiosk(){
     return null;
   }
   function handleScan(text){
+    try{ scanSay("QR leído."); }catch(e){}
     var toks = String(text).toUpperCase().split(/[^A-Z0-9]+/).filter(function(t){ return t.length === 8; });
     for(var i = 0; i < toks.length; i++){ var g = guestByCode(toks[i]); if(g){ pickGuest(g); return; } }
     if(toks.length) nudge("Ese QR no está en la lista de invitados. Busca por nombre o rellena a mano.");
@@ -13418,16 +13422,34 @@ function kiosk(){
     }
     camTimer = setTimeout(camLoop, 130);
   }
+  function scanSay(t, bad){ var e = $("scanst"); if(!e) return; e.textContent = t; e.className = "scanst" + (bad ? " bad" : ""); }
   function startCam(){
-    if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){ photoScan(); return; }
-    $("camov").hidden = false; $("camhint").textContent = "Apunta al QR de la invitación";
-    navigator.mediaDevices.getUserMedia({video: {facingMode: {ideal: "environment"}, width: {ideal: 1280}, height: {ideal: 720}}, audio: false}).then(function(stream){
-      camStream = stream;
-      var v = $("camv"); v.srcObject = stream; v.muted = true; v.setAttribute("playsinline", "");
-      var p = v.play(); return p && p.then ? p : null;
-    }).then(function(){ if(camStream) camLoop(); }).catch(function(){
-      stopCam(); msg("No he podido abrir la cámara. Permite la cámara en Safari para esta página, o haz una foto al QR.", "info"); photoScan();
-    });
+    try{
+      scanSay("Abriendo la cámara...");
+      var ua = navigator.userAgent || "";
+      if(/Instagram|FBAN|FBAV|FB_IAB|WhatsApp|Line\/|MicroMessenger|GSA\//i.test(ua)){
+        scanSay("Estás dentro de otra app. Abre esta página en Safari para usar la cámara, o pulsa Hacer foto.", true);
+      }
+      if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){
+        scanSay("Este navegador no deja abrir la cámara en directo. Se abre la cámara para hacer foto al QR.", true); photoScan(); return;
+      }
+      if(typeof jsQR !== "function"){ scanSay("Falta el lector de QR. Recarga la página.", true); return; }
+      $("camov").hidden = false; $("camhint").textContent = "Apunta al QR de la invitación";
+      navigator.mediaDevices.getUserMedia({video: {facingMode: {ideal: "environment"}}, audio: false}).then(function(stream){
+        camStream = stream;
+        var v = $("camv"); v.srcObject = stream; v.muted = true; v.setAttribute("playsinline", ""); v.setAttribute("webkit-playsinline", "");
+        var p = v.play(); return p && p.then ? p : null;
+      }).then(function(){ if(camStream){ scanSay("Cámara abierta. Apunta al QR."); camLoop(); } }).catch(function(err){
+        stopCam();
+        var nm = (err && err.name) || "error";
+        if(nm === "NotAllowedError" || nm === "SecurityError") scanSay("La cámara está bloqueada. En el iPhone: Ajustes, Safari, Cámara, Preguntar. Mientras, se abre la foto.", true);
+        else scanSay("No se pudo abrir la cámara (" + nm + "). Se abre la foto.", true);
+        photoScan();
+      });
+    }catch(e){
+      stopCam(); scanSay("Fallo al abrir la cámara (" + (e && e.message || e) + "). Se abre la foto.", true);
+      try{ photoScan(); }catch(e2){}
+    }
   }
   $("scan").addEventListener("click", startCam);
   $("camclose").addEventListener("click", stopCam);
@@ -13435,13 +13457,13 @@ function kiosk(){
   document.addEventListener("visibilitychange", function(){ if(document.hidden && camStream) stopCam(); });
   $("scanin").addEventListener("change", function(){
     var f = this.files && this.files[0]; if(!f) return;
-    msg("Leyendo el QR...", "info");
+    msg("Leyendo el QR...", "info"); scanSay("Leyendo la foto...");
     var url = URL.createObjectURL(f), img = new Image();
     img.onload = function(){
       var res = null;
       try{ res = decodeImg(img); }catch(e){ res = null; }
       URL.revokeObjectURL(url);
-      if(res) handleScan(res); else nudge("No he podido leer el QR. Acércate un poco, que se vea entero y nítido, y repite la foto. O busca por nombre.");
+      if(res) handleScan(res); else { scanSay("No se ha podido leer el QR de la foto.", true); nudge("No he podido leer el QR. Acércate un poco, que se vea entero y nítido, y repite la foto. O busca por nombre."); }
     };
     img.onerror = function(){ URL.revokeObjectURL(url); nudge("No he podido abrir la foto. Prueba otra vez o busca por nombre."); };
     img.src = url;
