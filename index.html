@@ -97,6 +97,14 @@ a.logo:hover{transform:rotate(-12deg)}
 .stepper{display:flex;align-items:center;gap:clamp(14px,3vw,26px)}
 .rb{flex:none;width:56px;height:56px;border-radius:50%;border:1.5px solid var(--ink);background:transparent;font-size:30px;line-height:1;display:grid;place-items:center;padding:0 0 3px;transition:background .15s,color .15s,transform .1s}
 .rb:hover{background:var(--ink);color:var(--paper)}
+.camov{position:fixed;inset:0;z-index:300;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:16px;text-transform:none}
+.camov[hidden]{display:none}
+.camwrap{position:relative;width:100%;max-width:560px;border-radius:18px;overflow:hidden;background:#111}
+.camov video{display:block;width:100%;height:min(62vh,420px);object-fit:cover}
+.camframe{position:absolute;left:50%;top:50%;width:min(56vw,240px);aspect-ratio:1;transform:translate(-50%,-50%);border:3px solid var(--cream);border-radius:18px;box-shadow:0 0 0 9999px rgba(0,0,0,.28);pointer-events:none}
+.camhint{margin:0;color:var(--cream);font-size:15px;font-weight:700;letter-spacing:.02em;text-align:center}
+.camact{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.camact .btn-back{color:var(--cream);border-color:var(--cream)}
 .rb:active{transform:scale(.94)}
 .rb[disabled]{opacity:.3;pointer-events:none}
 .num{font-family:var(--dots);font-weight:800;font-size:clamp(64px,10vw,92px);line-height:.9;color:var(--red);min-width:1.1ch;text-align:center;font-variant-numeric:tabular-nums}
@@ -108,7 +116,10 @@ a.logo:hover{transform:rotate(-12deg)}
 .whocard>div{display:flex;flex-direction:column;gap:18px}
 .w-row{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(18px,3vw,40px);align-items:end}
 @media (max-width:760px){.w-row{grid-template-columns:1fr}}
-.w-scan{padding:20px 24px;font-size:15px;letter-spacing:.1em}
+.btn-go.w-scan{width:auto;max-width:100%;padding:13px 22px;font-size:12px;letter-spacing:.06em;line-height:1.25}
+.scanst:empty{display:none}
+.scanst{margin:8px 2px 0;font-size:12px;font-weight:600;letter-spacing:.02em;text-transform:none;opacity:.7;min-height:1.2em}
+.scanst.bad{opacity:1;color:var(--red)}
 .w-hint{margin-top:8px;font-size:12px;font-style:italic;opacity:.75}
 .w-or{font-size:11px;letter-spacing:.08em;opacity:.7}
 .sugg{display:grid;margin-top:8px;border:1.5px solid var(--ink);border-radius:8px;overflow:hidden;background:var(--paper)}
@@ -391,7 +402,7 @@ footer .credit a{text-decoration:none}
 /* ============ Ajustes del evento (editables) ============ */
 var CFG = {
   MODE: "card",
-  CARD_URL: "",   /* enlace público de la tarjeta de sellos */
+  CARD_URL: "https://bocamanga.github.io/social-club/",   /* enlace público de la tarjeta de sellos */
   PIN: "1022",                /* código del staff para sellar a mano y canjear */
   CAP: 15                     /* aforo de partida por room */
 };
@@ -478,7 +489,7 @@ function cardPage(){
     var sc = $("startchip");
     if(card.start && roomBy(card.start)){
       var sr = roomBy(card.start); sc.hidden = false; sc.style.setProperty("--rc", sr.color); sc.style.setProperty("--rf", sr.fg);
-      sc.textContent = "Vuestra primera room · " + two(sr.n) + " " + sr.name;
+      sc.textContent = "Room " + two(sr.n);
     } else { sc.hidden = true; }
     var left = 6 - cnt;
     $("sub").textContent = left === 0 ? "Tarjeta completa. Pasa por la tienda de merch." : (left === 5 ? "Sella las seis rooms y pasa por la tienda de merch a por un regalo." : "Te " + (left === 1 ? "falta 1 room" : "faltan " + left + " rooms") + " para el regalo.");

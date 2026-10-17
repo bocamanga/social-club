@@ -116,7 +116,8 @@ a.logo:hover{transform:rotate(-12deg)}
 .whocard>div{display:flex;flex-direction:column;gap:18px}
 .w-row{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(18px,3vw,40px);align-items:end}
 @media (max-width:760px){.w-row{grid-template-columns:1fr}}
-.w-scan{padding:20px 24px;font-size:15px;letter-spacing:.1em}
+.btn-go.w-scan{width:auto;max-width:100%;padding:13px 22px;font-size:12px;letter-spacing:.06em;line-height:1.25}
+.scanst:empty{display:none}
 .scanst{margin:8px 2px 0;font-size:12px;font-weight:600;letter-spacing:.02em;text-transform:none;opacity:.7;min-height:1.2em}
 .scanst.bad{opacity:1;color:var(--red)}
 .w-hint{margin-top:8px;font-size:12px;font-style:italic;opacity:.75}
@@ -356,7 +357,7 @@ footer .credit a{text-decoration:none}
           <div class="w-row">
             <div>
               <button type="button" class="btn btn-go w-scan" id="scan">Escanear el QR de la invitación</button>
-              <p class="scanst" id="scanst" aria-live="polite">Lector de QR v3</p>
+              <p class="scanst" id="scanst" aria-live="polite"></p>
               <input type="file" id="scanin" accept="image/*" capture="environment" hidden>
               <div class="camov" id="camov" hidden role="dialog" aria-label="Escanear el QR de la invitación">
                 <div class="camwrap"><video id="camv" playsinline muted autoplay></video><div class="camframe" aria-hidden="true"></div></div>
